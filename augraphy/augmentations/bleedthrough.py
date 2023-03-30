@@ -12,6 +12,9 @@ from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class BleedThrough(Augmentation):
+    # Input image from the previous run to be used as a foreground for the effect
+    previous_image = None
+
     """Emulates bleed through effect from the combination of ink bleed and
     gaussian blur operations.
 
@@ -149,37 +152,7 @@ class BleedThrough(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
-        # path to foreground cache folder
-        cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
-        cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
-
-        # at least 2 images, because 1 image will be current image
-        if len(cache_image_paths) > 1:
-
-            modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
-            newest_index = np.argmax(modified_time)
-            image_index = random.randint(0, len(cache_image_paths) - 1)
-
-            # prevent same image
-            while image_index == newest_index:
-                image_index = random.randint(0, len(cache_image_paths) - 1)
-            # get random image
-            image_bleedthrough_foreground = cv2.imread(cache_image_paths[image_index])
-
-            if image_bleedthrough_foreground is not None:
-
-                # resize foreground
-                image_bleedthrough_foreground = cv2.resize(
-                    image_bleedthrough_foreground,
-                    (image.shape[1], image.shape[0]),
-                    interpolation=cv2.INTER_AREA,
-                )
-            else:
-                image_bleedthrough_foreground = image
-
-        else:
-            image_bleedthrough_foreground = image
-
+        image_bleedthrough_foreground = BleedThrough.previous_image if BleedThrough.previous_image is not None else image
         # flip left-right only, flip top-bottom get inverted text, which is not realistic
         image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
 
@@ -202,4 +175,5 @@ class BleedThrough(Augmentation):
             image_bleed_offset = self.generate_offset(image_bleed, self.offsets)
             image_bleedthrough = self.blend(image, image_bleed_offset, self.alpha)
 
-            return image_bleedthrough
+        BleedThrough.previous_image = image
+        return image_bleedthrough

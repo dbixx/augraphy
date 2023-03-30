@@ -133,35 +133,6 @@ class AugraphyPipeline:
                 ),
             )
 
-        # create augraphy cache folder
-        cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
-        os.makedirs(cache_folder_path, exist_ok=True)
-        cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
-
-        file_indices = []
-        modified_time = []
-        for image_path in cache_image_paths:
-            file_name = os.path.basename(image_path)
-            file_indices.append(int(file_name[file_name.index("_") + 1 : -4]))
-            modified_time.append(os.path.getmtime(image_path))
-
-        # store 30 cache image files
-        if len(cache_image_paths) >= 30:
-            oldest_index = np.argmin(modified_time)
-            outfilename = cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png"
-            cv2.imwrite(
-                outfilename,
-                image,
-            )
-
-        else:
-            current_image_index = len(cache_image_paths)
-            outfilename = cache_folder_path + "image_" + str(current_image_index) + ".png"
-            cv2.imwrite(
-                outfilename,
-                image,
-            )
-
         data = dict()
 
         # Store performance metadata and other logs here.
